@@ -1,0 +1,37 @@
+
+
+def day4(useMockData:Boolean):Unit = {
+  var sum:Long = 0;
+  var currentCard:Long = 1;
+  var map: HashMap[Long, Long] = HashMap();
+  println("Test");
+  getInput(4, useMockData)
+    .getLines()
+    .foreach(x => {
+      val currentCopiesOfThis = map.get(currentCard) match
+        case Some(value) => value+1
+        case None => 1
+        val numbers = x.split(":")(1).split('|');
+        val expectedNumbers = numbers(0);
+        val actualNumbers = numbers(1);
+      
+        var amountMatches = 0;
+        val expected = extractNumbers(expectedNumbers);
+        extractNumbers(actualNumbers).foreach(x => {
+          if (expected.contains(x)) {
+            amountMatches += 1;
+          }
+        })
+        for (x <- Range.Long(currentCard.toLong + 1.toLong, currentCard.toLong + amountMatches.toLong + 1.toLong,1)) {
+          var newVal = map.get(x) match
+            case Some(value) => value+currentCopiesOfThis
+            case None => currentCopiesOfThis
+            ;
+            map.put(x,newVal);
+        }
+        amountMatches = 0;
+        currentCard += 1;
+      })
+      map.values.foreach(x => sum += x);
+      println(sum+currentCard-1);
+}

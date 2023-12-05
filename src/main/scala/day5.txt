@@ -1,0 +1,142 @@
+type innerMap = Vector[(Long,Long,Long)];
+@main def hello: Unit = {
+  var containerMap:HashMap[String,innerMap] = HashMap();
+  var map:innerMap = Vector();
+  var currentMap: innerMap = Vector();
+  var mapName = "seeds";
+  var seeds:Vector[Long] = Vector();
+  var mapNames: Vector[String] = Vector();
+    getInput(5,false).getLines().foreach(x => {
+    if(x.contains("seeds")){
+      seeds = extractNumbers(x).toVector;
+    }else if(x.contains("map")){
+      mapNames = mapNames :+ x;
+      mapName = x;
+      currentMap = Vector();
+    }else if(x == ""){
+      containerMap.put(mapName,currentMap);
+    }else{
+      var numbers = extractNumbers(x);
+      currentMap = currentMap :+ (numbers(0),numbers(1),numbers(2));
+    }
+  })
+  mapNames = mapNames.reverse;
+  val range = seedRangeToSeedsRange(seeds);
+  var upperLimit = getBiggestSeed(range);
+  var currentIndex = 0;
+  var minLoc = Long.MaxValue
+  var minSeed = Long.MaxValue
+  println("upperLimit: "+upperLimit.toString())
+  var yay = 1;
+  var found = false
+  while (!found){
+    if(yay % 100_000 == 0){
+      println("Batch " + yay.toString() + " parsed.")
+    } 
+    yay+=1;
+    val seed = convertWholeBackwards(containerMap,mapNames,currentIndex);
+    if(isInSeedRange(range, seed)){
+      found = true
+      minLoc = currentIndex;
+      minSeed = seed;
+    }
+    currentIndex += 1;
+  }  
+  println("minLoc:"+minLoc.toString());
+  println("minSeed:"+minSeed.toString());
+}
+
+def getBiggestSeed(range:Vector[Long]):Long = {
+  var maxSeed:Long = 0;
+  for(i <- Range(0,range.length,2)){
+    val upperLimit:Long = (range(i)+range(i+1));
+    if(upperLimit > maxSeed){
+      maxSeed = upperLimit;
+    }
+  }
+  return maxSeed;
+}
+
+def isInSeedRange(range:Vector[Long],value:Long):Boolean = {
+  var isInRange = false;
+  for(i <- Range(0,range.length,2)){
+    if(value>=range(i) && value<=range(i+1)){
+      isInRange = true;
+    }
+  }
+  return isInRange;
+}
+
+def convertWholeBackwards(containerMap:HashMap[String,innerMap],mapNames:Vector[String],value:Long):Long = {
+  var retVal = value;
+  mapNames.foreach(x => {
+    var mapToCheck = containerMap(x);
+    retVal = convertBackwards(mapToCheck,retVal);
+  })
+  return retVal;
+}
+
+def convertBackwards(map:innerMap,value:Long):Long = {
+  var found = false;
+  var retVal:Long = 0;
+  map.foreach(x => {
+    val dest = x(0);
+    val src = x(1);
+    val length = x(2);
+    
+    if(!found){
+      if(value>=dest && value < dest+length){
+        found = true;
+        retVal = value-dest+src
+      }
+    }
+  })
+  if(!found){
+    retVal = value;
+  }
+  return retVal;
+}
+
+def seedRangeToSeedsRange(seedRange:Vector[Long]):Vector[Long] = {
+  var retVec: Vector[Long] = Vector();
+  for(x <- Range.Long(0,seedRange.length,2)){
+    retVec = retVec :+ seedRange(x.toInt)
+    retVec = retVec :+ seedRange(x.toInt)+seedRange(x.toInt+1);
+  }
+  return retVec
+}
+
+def convertAllSeeds(containerMap:HashMap[String,innerMap],names:Vector[String],seeds:Vector[Long]):Vector[Long] = {
+  var retVec:Vector[Long] = Vector(0)
+  seeds.foreach(x => {
+    retVec = retVec :+ convertSeed(containerMap,names,x);
+  })
+  return retVec
+}
+
+def convertSeed(containerMap:HashMap[String,innerMap],names:Vector[String],seed:Long):Long={
+  var retVal = seed;
+  names.foreach(x => {
+    retVal = convertInMap(containerMap(x),retVal);
+  })
+  return retVal;
+}
+
+def convertInMap(map:innerMap,value:Long):Long = {
+  var retVal = 0.toLong;
+  var found = false;
+  map.foreach(x => {
+    val dest = x(0);
+    val src = x(1);
+    val length = x(2);
+    if(!found){
+      if(value >= src && value < src+length){
+        retVal = value - src + dest;
+        found = true;
+      }else{
+        retVal = value;
+      }
+    }
+  })
+  return retVal;
+}

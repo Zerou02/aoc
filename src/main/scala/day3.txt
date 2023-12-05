@@ -1,0 +1,174 @@
+/*
+  var vec: Vector[Vector[Char]] = Vector();
+  val file = Source.fromFile("src/resources/day3.txt");
+  file
+    .getLines()
+    .foreach(x => {
+      var lineVec: Vector[Char] = Vector();
+      x.foreach(x => {
+        lineVec = lineVec :+ x;
+      })
+      vec = vec :+ lineVec;
+    })
+
+  printVec(vec)
+  println("----");
+  println(vec(0));
+  println(getGearIndex(vec, 1, 0));
+
+  var sum = 0;
+  var currentParsedDigit: String = "";
+  var nextToEngine = false
+  var map:HashMap[String,Vector[Int]] = HashMap();
+  var parts: Vector[(Int, Int)] = Vector();
+  var gearFound = false;
+  for (y <- Range(0, vec.length)) {
+    for (x <- Range(0, vec(0).length)) {
+      if (isDigit(vec(y)(x))) {
+        currentParsedDigit += vec(y)(x);
+        if(!gearFound){
+
+          getGearIndex(vec, x, y).foreach(x => {
+            parts = parts :+ x;
+            gearFound = true;
+          })
+        }
+      }else{
+        if (currentParsedDigit != ""){
+          parts.foreach(x => {
+            val key = x(0).toString()+","+x(1).toString();
+            map.get(key) match
+              case Some(value) => {
+                val newList = value:+ currentParsedDigit.toInt;
+                map.put(key,newList);
+              }
+              case None => map.put(key,Vector(currentParsedDigit.toInt))
+
+          })
+        }
+        currentParsedDigit = "";
+        parts = Vector();
+        gearFound = false;
+      }
+      /*if (isDigit(vec(y)(x))) {
+        currentParsedDigit += vec(y)(x);
+        val surroundings = getSurroundingElements(vec, x, y);
+        if (containsEnginePart(surroundings)) {
+          nextToEngine = true;
+        }
+      } else {
+        if (currentParsedDigit != "" && nextToEngine) {
+          sum += currentParsedDigit.toInt
+        }
+        currentParsedDigit = "";
+        nextToEngine = false;
+      } */
+    }
+  }
+  map.values.foreach(x => {
+    if(x.length == 2){
+      sum += x(0)*x(1);
+    }
+  })
+  println(map)
+  println(sum); */
+
+def getSurroundingElements[T](
+    vec: Vector[Vector[T]],
+    row: Long,
+    column: Long
+): Vector[T] = {
+  val offsets = Vector(
+    (-1, -1),
+    (0, -1),
+    (1, -1),
+    (1, 0),
+    (1, 1),
+    (0, 1),
+    (-1, 1),
+    (-1, 0)
+  );
+  var retVec: Vector[T] = Vector();
+  val width = vec(0).size;
+  val height = vec.size;
+  offsets.foreach(e => {
+    val x = column + e(0);
+    val y = row + e(1);
+    if (x >= 0 && x < width && y >= 0 && y < height) {
+      retVec = retVec :+ vec(x.toInt)(y.toInt);
+    }
+  });
+  return retVec;
+}
+
+def containsEnginePart(vec: Vector[Char]): Boolean = {
+  var retVal = false;
+  vec.foreach(x => {
+    if (!isDigit(x) && !(x == '.')) {
+      retVal = true;
+    }
+  })
+  return retVal
+}
+
+def getGearIndex(
+    vec: Vector[Vector[Char]],
+    row: Long,
+    column: Long
+): Vector[(Long, Long)] = {
+  val offsets = Vector(
+    (-1, -1),
+    (0, -1),
+    (1, -1),
+    (1, 0),
+    (1, 1),
+    (0, 1),
+    (-1, 1),
+    (-1, 0)
+  );
+  var retVec: Vector[(Long, Long)] = Vector();
+  val width = vec(0).size;
+  val height = vec.size;
+  offsets.foreach(e => {
+    val x = column + e(0);
+    val y = row + e(1);
+    if (x >= 0 && x < width && y >= 0 && y < height) {
+      val element = vec(x.toInt)(y.toInt)
+      if (element == '*') {
+        retVec = retVec :+ (x, y);
+      }
+    }
+  });
+  return retVec;
+}
+
+def extractNumbers(s: String): List[Long] = {
+  var retList: List[Long] = List();
+  var currNumber = "";
+  s.foreach(x => {
+    if (x >= '0' && x <= '9') {
+      currNumber += x;
+    } else {
+      if (currNumber != "") {
+        retList = retList ::: List(currNumber.toLong);
+      }
+      currNumber = "";
+    }
+  })
+  if (currNumber != "") {
+    retList = retList ::: List(currNumber.toLong);
+  }
+  return retList;
+}
+
+def calcPoLong(amount: Long): Long = {
+  if (amount < 1) {
+    return 0;
+  } else {
+    var retVal = 1;
+    for (x <- Range.Long(0, amount - 1,1)) {
+      retVal *= 2;
+    }
+    return retVal;
+  }
+}
