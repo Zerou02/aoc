@@ -72,8 +72,8 @@ def hoare1(n: Int): Int = {
       } else {
         re = m;
       }
-      i = li;
     }
+    i = li;
   }
   return i;
 }
