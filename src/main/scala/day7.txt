@@ -1,0 +1,276 @@
+
+type Points = Int
+type Hand = String
+type Entry = (Hand, Points);
+
+enum WinType{
+  case FiveOfAKind,FourOfAKind,FullHouse,ThreeOfAKind,TwoPair,OnePair,HighCard
+}
+
+var map:HashMap[String,Vector[Hand]] = HashMap();
+var bidMap:HashMap[String,Int] = HashMap();
+@main def main = {
+  var amountHands = 0;
+  getInput(7, false)
+    .getLines()
+    .foreach(x => {
+      amountHands += 1;
+      val line = x.split(" ");
+      var ordered = line(0)
+        //orderHand(line(0))
+      bidMap.put(ordered,line(1).toInt)
+      getWinType(ordered) match
+        case WinType.FiveOfAKind => 
+          insertInVectorMap("FiveOfAKind",ordered,map)
+        case WinType.FourOfAKind =>
+          insertInVectorMap("FourOfAKind",ordered,map)
+        case WinType.FullHouse =>
+          insertInVectorMap("FullHouse",ordered,map)
+        case WinType.ThreeOfAKind =>
+          insertInVectorMap("ThreeOfAKind",ordered,map)
+        case WinType.TwoPair =>
+          insertInVectorMap("TwoPair",ordered,map)
+        case WinType.OnePair =>
+          insertInVectorMap("OnePair",ordered,map)
+        case WinType.HighCard =>
+          insertInVectorMap("HighCard",ordered,map)
+      
+        })
+        map.foreach(x => {
+          map(x._1) = sortHandVec(x._2);
+        }) 
+        var sum = 0;
+        var ordering = List("FiveOfAKind","FourOfAKind","FullHouse","ThreeOfAKind","TwoPair","OnePair","HighCard");
+        ordering.foreach(x => {
+          map.get(x).foreach(y => {
+            y.foreach(z => {
+              sum += bidMap(z) * amountHands;
+              amountHands -= 1;
+            })
+          })
+        })
+        printMap(map)
+        println(sum)
+}
+
+def printMap(map:HashMap[String,Vector[Hand]]) = {
+  map.foreach(x => {
+    println(x._1)
+    println(x._2);
+    println();
+  })
+}
+
+def getAllJSubstitions(hand:Hand):Vector[Hand] = {
+  val possibilities = List("A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2");
+  var retVec:Vector[Hand] = Vector();
+  possibilities.foreach(x => {
+    retVec = retVec :+ hand.replaceAll("J",x);
+  })
+  return retVec
+}
+
+def substituteJ(hand:Hand,value:String):Hand = {
+  return hand.replaceAll("J",value);
+}
+
+def isTypeBigger(toCheck:String,against:String):Boolean = {
+  val ordering =
+    List("A", "K", "Q", "T", "9", "8", "7", "6", "5", "4", "3", "2","J");
+  return ordering.indexOf(toCheck) < ordering.indexOf(against);
+}
+
+def isTypeEqual(toCheck:String,against:String):Boolean = {
+  val ordering =
+    List("A", "K", "Q","T", "9", "8", "7", "6", "5", "4", "3", "2","J");
+  return ordering.indexOf(toCheck) == ordering.indexOf(against);
+}
+
+def getHigherHand(hand1:Hand,hand2:Hand):Hand = {
+  var isBigger = false;
+  var canEnd =false;
+  for (i <- Range(0,hand1.size)){
+    if(canEnd){
+    }else{
+      if(isTypeEqual(hand1(i).toString(),hand2(i).toString())){
+      }else{
+        canEnd = true;
+        isBigger = isTypeBigger(hand1(i).toString(),hand2(i).toString());
+      }
+    }
+  }
+  return if(isBigger){hand1}else{hand2}
+}
+
+def isHandEqual(hand1:Hand,hand2:Hand):Boolean = {
+  var amount = 0;
+  for (i <- Range(0,hand2.size)){
+    if(isTypeEqual(hand1(i).toString(),hand2(i).toString())){
+      amount += 1;
+    }
+  }
+  return amount ==  hand2.size;
+}
+
+def sortHandVec(hand:Vector[Hand]):Vector[Hand] = {
+  var retVec:Vector[Hand] = Vector();
+  var checkVec = hand;
+  for(i <- Range(0,checkVec.size)){
+    var highestHand:Hand = checkVec(0);
+    checkVec.foreach(x => {
+      highestHand = getHigherHand(highestHand,x);
+    })
+    retVec = retVec :+ highestHand;
+    checkVec = checkVec.filter(x => !isHandEqual(x,highestHand));
+  }
+  return retVec;
+}
+
+
+
+def insertInVectorMap(key:String,value:Hand,map:HashMap[String,Vector[Hand]]) = {
+  map.get(key) match
+    case Some(oldVec) => {
+      var newVector:Vector[Hand] = oldVec :+ value;
+      map.put(key,newVector);
+    }
+    case None => map.put(key,Vector(value));
+}
+
+def getXOfAKind(x:String,hand:Hand):Int = {
+  var count = 0;
+  hand.foreach(y => {
+    if(y.toString() == x){
+      count += 1;
+    }
+  })
+  return count;
+}
+/**
+  * @param amount min 3
+  */
+def hasBigger3OfAKind(hand:Hand,amount:Int):Boolean = {
+  var retVal = false;
+  hand.foreach(x => {
+    if(getXOfAKind(x.toString(),hand) == amount){
+      retVal = true;
+    }
+  });
+  return retVal;
+}
+
+
+def has5OfAKind(hand:Hand):Boolean = {
+  var hasPair = false;
+  getAllJSubstitions(hand).foreach(x => {
+      if(hasBigger3OfAKind(x,5)){
+        hasPair = true;
+      };
+  })
+  return hasPair
+}
+
+def has4OfAKind(hand:Hand):Boolean = {
+  var hasPair = false;
+  getAllJSubstitions(hand).foreach(x => {
+      if(hasBigger3OfAKind(x,4)){
+        hasPair = true;
+      };
+  })
+  return hasPair;
+}
+
+def has3OfAKind(hand:Hand):Boolean = {
+  var hasPair = false;
+  getAllJSubstitions(hand).foreach(x => {
+      if(hasBigger3OfAKind(x,3)){
+        hasPair = true;
+      };
+  })
+  return hasPair;
+}
+
+def findAmountPairs(hand:Hand):Int = {
+var amountPairs = 0;
+  var checkedCharacters: Vector[String] = Vector();
+  hand.foreach(x => {
+    if(getXOfAKind(x.toString(),hand) == 2 && !checkedCharacters.contains(x.toString())){
+      amountPairs += 1;
+    }
+    checkedCharacters = checkedCharacters :+x.toString();
+  });
+  return amountPairs;
+}
+
+def hasTwoPairs(hand:Hand):Boolean = {
+  var hasPair = false;
+  getAllJSubstitions(hand).foreach(x => {
+      if(findAmountPairs(x) == 2){
+        hasPair = true;
+      };
+  })
+  return hasPair;
+}
+
+def hasOnePair(hand:Hand):Boolean = {
+  var hasPair = false;
+  getAllJSubstitions(hand).foreach(x => {
+      if(findAmountPairs(x) == 1){
+        hasPair = true;
+      };
+  })
+  return hasPair;
+}
+
+def hasFullHouse(hand:Hand):Boolean = {
+  val ordering =
+  List("A", "K", "Q","T", "9", "8", "7", "6", "5", "4", "3", "2","J");
+  var hasFullHouse = false;
+  getAllJSubstitions(hand).foreach(subst => {
+    var hasTriple = false;
+    var hasPair = false;
+    subst.foreach(x => {
+      if(getXOfAKind(x.toString(),subst) == 3){
+        hasTriple = true;
+      }else if(getXOfAKind(x.toString(),subst) == 2){
+        hasPair = true
+      }
+    })
+    if(hasPair && hasTriple){
+      hasFullHouse = true;
+    }
+  })
+  return hasFullHouse;
+}
+
+def getWinType(hand:Hand):WinType = {
+  if(has5OfAKind(hand)){
+    return WinType.FiveOfAKind
+  }else if(has4OfAKind(hand)){
+    return WinType.FourOfAKind
+  }else if(hasFullHouse(hand)){
+    return WinType.FullHouse
+  }else if(has3OfAKind(hand)){
+    return WinType.ThreeOfAKind
+  }else if(hasTwoPairs(hand)){
+    return WinType.TwoPair;
+  }else if(hasOnePair(hand)){
+    return WinType.OnePair;
+  }else{
+    return WinType.HighCard
+  }
+}
+
+def orderHand(hand: Hand): Hand = {
+  val ordering =
+    List("A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2","J");
+  var retString = "";
+  ordering.foreach(x => {
+    hand.foreach(y => {
+      if (y.toString() == x) {
+        retString = retString :+ y;
+      }
+    })
+  })
+  return retString;
+}
